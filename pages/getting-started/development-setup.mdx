@@ -1,0 +1,325 @@
+# Development Setup
+
+This guide covers the complete development environment setup for Interlay AI.
+
+## Local Development
+
+### 1. Start Infrastructure Services
+
+Use Docker Compose to start all required services:
+
+```bash
+# Start PostgreSQL, Kafka, Temporal, Vault, Redis
+docker-compose -f docker-compose.dev.yml up -d
+```
+
+Or start services individually:
+
+```bash
+# Start PostgreSQL
+docker run -d \
+  --name interlay-postgres \
+  -p 5432:5432 \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=interlay \
+  postgres:14
+
+# Start Redis
+docker run -d \
+  --name interlay-redis \
+  -p 6379:6379 \
+  redis:7
+```
+
+### 2. Start Microservices
+
+#### Event Processing Service
+```bash
+cd services/event-processing
+npm install
+npm run dev:up
+```
+
+#### Flow Orchestration Service
+```bash
+cd services/flow-orchestration
+npm install
+npm run dev:up
+```
+
+#### HashiCorp Vault
+```bash
+cd services/vault
+npm install
+npm run dev:up
+```
+
+### 3. Start Main Application
+
+```bash
+# From project root
+npm run dev
+```
+
+The application will be available at:
+- **Main App**: http://localhost:3000
+- **Prisma Studio**: http://localhost:5555
+- **Temporal UI**: http://localhost:8088
+- **Vault UI**: http://localhost:8200
+
+## Development Scripts
+
+### Database Management
+
+```bash
+# Run migrations
+npm run db:migrate
+
+# Reset database
+npm run db:reset
+
+# Seed with test data
+npm run db:seed
+
+# Open Prisma Studio
+npm run db:studio
+```
+
+### Type Generation
+
+```bash
+# Generate Prisma types
+npm run db:generate
+
+# Type check
+npm run type-check
+```
+
+### Testing
+
+```bash
+# Run all tests
+npm test
+
+# Run with coverage
+npm run test:coverage
+
+# Run in watch mode
+npm run test:watch
+
+# Run E2E tests
+npm run test:e2e
+```
+
+### Linting & Formatting
+
+```bash
+# Lint code
+npm run lint
+
+# Format with Prettier
+npm run format
+
+# Fix linting issues
+npm run lint:fix
+```
+
+## VS Code Setup
+
+### Recommended Extensions
+
+Create `.vscode/extensions.json`:
+
+```json
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "prisma.prisma",
+    "bradlc.vscode-tailwindcss",
+    "christian-kohler.path-intellisense",
+    "formulahendry.auto-rename-tag",
+    "streetsidesoftware.code-spell-checker"
+  ]
+}
+```
+
+### VS Code Settings
+
+Create `.vscode/settings.json`:
+
+```json
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "tailwindCSS.experimental.classRegex": [
+    ["clsx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+  ]
+}
+```
+
+## Environment Variables
+
+### Development Defaults
+
+For local development, you can use these defaults:
+
+```env
+# .env.local
+NODE_ENV=development
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/interlay
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Use test keys for development
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+
+# Local services
+KAFKA_BROKERS=localhost:9092
+TEMPORAL_ADDRESS=localhost:7233
+REDIS_URL=redis://localhost:6379
+VAULT_ADDR=http://localhost:8200
+```
+
+## Debugging
+
+### Debug Configuration
+
+Add to `.vscode/launch.json`:
+
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Next.js: debug server-side",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev"
+    },
+    {
+      "name": "Next.js: debug client-side",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3000"
+    },
+    {
+      "name": "Debug Jest Tests",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": [
+        "--inspect-brk",
+        "${workspaceRoot}/node_modules/.bin/jest",
+        "--runInBand"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    }
+  ]
+}
+```
+
+### Chrome DevTools
+
+1. Open Chrome DevTools
+2. Navigate to `chrome://inspect`
+3. Click "Open dedicated DevTools for Node"
+4. Set breakpoints in your server code
+
+## Performance Monitoring
+
+### Development Tools
+
+- **React DevTools**: Install browser extension
+- **Redux DevTools**: For state debugging
+- **Network Tab**: Monitor API calls
+- **Performance Tab**: Profile React components
+
+### Logging
+
+Enable detailed logging:
+
+```env
+LOG_LEVEL=debug
+DEBUG=interlay:*
+```
+
+## Common Development Tasks
+
+### Adding a New tRPC Router
+
+1. Create router file: `src/server/api/routers/newFeature.ts`
+2. Add to app router: `src/server/api/root.ts`
+3. Use in components: `api.newFeature.method.useQuery()`
+
+### Creating a New Component
+
+```bash
+# Use the component generator
+npm run generate:component MyComponent
+```
+
+### Adding a Database Migration
+
+```bash
+# After modifying schema.prisma
+npx prisma migrate dev --name add_new_feature
+```
+
+### Working with Temporal Workflows
+
+```bash
+# Register new workflow
+cd services/flow-orchestration
+npm run workflow:register
+
+# Test workflow locally
+npm run workflow:test
+```
+
+## Troubleshooting
+
+### Port Conflicts
+
+```bash
+# Find process using port
+lsof -i :3000
+
+# Kill process
+kill -9 <PID>
+```
+
+### Database Issues
+
+```bash
+# Reset database completely
+npm run db:reset
+
+# Check connection
+npx prisma db pull
+```
+
+### Cache Issues
+
+```bash
+# Clear Next.js cache
+rm -rf .next
+
+# Clear npm cache
+npm cache clean --force
+
+# Reinstall dependencies
+rm -rf node_modules package-lock.json
+npm install
+```
+
+## Next Steps
+
+- Review [Architecture Overview](/getting-started/architecture)
+- Explore [Core Concepts](/core-concepts)
+- Start building with [Component Library](/components)

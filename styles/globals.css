@@ -1,0 +1,31 @@
+/* Tailwind CSS directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Nextra overrides for better readability */
+:root {
+  --nextra-primary-hue: 212;
+  --nextra-primary-saturation: 100%;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom styles for documentation */
+.nextra-content {
+  @apply max-w-none;
+}
+
+/* Code blocks */
+pre {
+  @apply overflow-x-auto;
+}
+
+/* Improve dark mode contrast */
+.dark {
+  --nextra-bg: 17 17 17;
+  --nextra-primary-hue: 212;
+}

@@ -1,0 +1,195 @@
+# Installation
+
+This guide will help you set up the Interlay AI development environment.
+
+## Prerequisites
+
+- **Node.js** 18+ and npm
+- **PostgreSQL** 14+
+- **Docker** and Docker Compose (for services)
+- **Git** for version control
+
+## Clone the Repository
+
+```bash
+git clone https://github.com/yourusername/interlay-ai.git
+cd interlay-ai
+```
+
+## Install Dependencies
+
+### Main Application
+
+```bash
+npm install
+```
+
+### Microservices
+
+Each service has its own dependencies:
+
+```bash
+# Event Processing Service
+cd services/event-processing
+npm install
+
+# Flow Orchestration Service
+cd services/flow-orchestration
+npm install
+
+# Vault Service
+cd services/vault
+npm install
+```
+
+## Environment Setup
+
+### 1. Create Environment Files
+
+Copy the example environment file:
+
+```bash
+cp .env.example .env.local
+```
+
+### 2. Required Environment Variables
+
+Configure these essential variables in your `.env.local`:
+
+```env
+# Database
+DATABASE_URL="postgresql://user:password@localhost:5432/interlay"
+
+# Authentication (Clerk)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+CLERK_WEBHOOK_SECRET=whsec_...
+
+# OpenAI
+OPENAI_API_KEY=sk-...
+
+# Pinecone Vector Database
+PINECONE_API_KEY=...
+PINECONE_ENVIRONMENT=...
+PINECONE_INDEX_NAME=interlay-vectors
+
+# AWS S3
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+AWS_REGION=us-east-1
+AWS_S3_BUCKET_NAME=interlay-files
+
+# Stripe Billing
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+
+# PostHog Analytics
+NEXT_PUBLIC_POSTHOG_KEY=...
+NEXT_PUBLIC_POSTHOG_HOST=https://app.posthog.com
+```
+
+### 3. Service-Specific Configuration
+
+Each microservice needs its own `.env` file:
+
+```bash
+# services/event-processing/.env
+DATABASE_URL=...
+KAFKA_BROKERS=localhost:9092
+
+# services/flow-orchestration/.env
+DATABASE_URL=...
+TEMPORAL_ADDRESS=localhost:7233
+
+# services/vault/.env
+VAULT_ADDR=http://localhost:8200
+VAULT_TOKEN=...
+```
+
+## Database Setup
+
+### 1. Create Database
+
+```bash
+createdb interlay
+```
+
+### 2. Run Migrations
+
+```bash
+# Main database
+npx prisma migrate dev
+
+# Service databases
+cd services/event-processing && npx prisma migrate dev
+cd services/flow-orchestration && npx prisma migrate dev
+```
+
+### 3. Seed Initial Data
+
+```bash
+npm run db:seed
+```
+
+## Start Development Services
+
+### Using Docker Compose (Recommended)
+
+```bash
+# Start all infrastructure services
+docker-compose -f docker-compose.dev.yml up -d
+
+# This starts:
+# - PostgreSQL
+# - Kafka & Zookeeper
+# - Temporal
+# - HashiCorp Vault
+# - Redis
+```
+
+### Manual Service Start
+
+If not using Docker:
+
+```bash
+# Start each service individually
+npm run dev:services
+```
+
+## Verify Installation
+
+1. **Main Application**: `npm run dev` - Should start on http://localhost:3000
+2. **Database**: `npx prisma studio` - View database at http://localhost:5555
+3. **Services Health**: Check service status with `npm run services:health`
+
+## Common Issues
+
+### Port Conflicts
+
+If you get port conflicts, check these default ports:
+- 3000: Main Next.js app
+- 5432: PostgreSQL
+- 9092: Kafka
+- 7233: Temporal
+- 8200: Vault
+- 6379: Redis
+
+### Database Connection
+
+If database connection fails:
+1. Ensure PostgreSQL is running
+2. Check DATABASE_URL format
+3. Verify user permissions
+
+### Missing Dependencies
+
+If modules are missing:
+```bash
+npm ci # Clean install from package-lock.json
+```
+
+## Next Steps
+
+- Continue to [Development Setup](/getting-started/development-setup)
+- Review the [Architecture Overview](/getting-started/architecture)
+- Start building with our [Component Library](/components)

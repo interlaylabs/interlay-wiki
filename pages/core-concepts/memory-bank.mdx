@@ -1,0 +1,361 @@
+import { Tabs, Tab } from 'nextra/components'
+import { Callout } from 'nextra/components'
+
+# Memory Bank System
+
+The Memory Bank is the core data storage and retrieval system in Interlay AI, designed around the principle of **"Dump Everything, Organize Later"**.
+
+<Callout type="info">
+  The Memory Bank combines unstructured memory pages with structured memory types, all enhanced with AI-powered semantic search via Pinecone vector embeddings.
+</Callout>
+
+## Architecture
+
+### Two-Tier Storage System
+
+<Tabs items={['Memory Pages', 'Memory Types & Items']}>
+  <Tab>
+    **Memory Pages** are rich, unstructured documents that support:
+    - TipTap editor with markdown support
+    - Embedded media (images, videos, files)
+    - AI-powered content enhancement
+    - Automatic summarization
+    - Vector embeddings for semantic search
+    - Topic classification
+  </Tab>
+  <Tab>
+    **Memory Types & Items** provide structured, customizable data:
+    - Dynamic field system (like a flexible CRM)
+    - Custom memory types with relational data
+    - Smart linking between items
+    - Bulk import/export capabilities
+    - Template-based creation
+    - AI extraction from unstructured content
+  </Tab>
+</Tabs>
+
+## Code Examples
+
+### Creating a Memory Page
+
+```typescript
+// Using tRPC to create a memory page
+const createPageMutation = api.memoryPage.create.useMutation({
+  onSuccess: (data) => {
+    console.log('Memory page created:', data.id)
+    router.push(`/memory/${data.id}`)
+  }
+})
+
+// Create the page
+await createPageMutation.mutateAsync({
+  title: 'Meeting Notes - Q1 Planning',
+  content: {
+    type: 'doc',
+    content: [
+      {
+        type: 'heading',
+        attrs: { level: 1 },
+        content: [{ type: 'text', text: 'Q1 Planning Meeting' }]
+      },
+      {
+        type: 'paragraph',
+        content: [{ type: 'text', text: 'Key objectives for the quarter...' }]
+      }
+    ]
+  },
+  folderId: currentFolderId,
+  tags: ['meetings', 'planning', 'q1-2024']
+})
+```
+
+### Memory Type Definition
+
+```typescript
+// Define a custom memory type for Contacts
+interface ContactMemoryType {
+  id: string
+  tenantId: string
+  name: 'Contact'
+  fields: [
+    {
+      name: 'firstName'
+      type: 'text'
+      required: true
+    },
+    {
+      name: 'lastName'
+      type: 'text'
+      required: true
+    },
+    {
+      name: 'email'
+      type: 'email'
+      required: false
+    },
+    {
+      name: 'company'
+      type: 'relation'
+      relatedType: 'Company'
+    },
+    {
+      name: 'tags'
+      type: 'select'
+      multiple: true
+      options: ['client', 'vendor', 'partner', 'lead']
+    }
+  ]
+}
+```
+
+### Vector Search Implementation
+
+```typescript
+// VectorService for semantic search
+class VectorService {
+  async searchSimilar(query: string, options?: SearchOptions) {
+    // Generate embedding for the query
+    const embedding = await this.openai.embeddings.create({
+      model: 'text-embedding-ada-002',
+      input: query
+    })
+
+    // Search in Pinecone
+    const results = await this.pinecone
+      .index('interlay-vectors')
+      .query({
+        vector: embedding.data[0].embedding,
+        topK: options?.limit || 10,
+        includeMetadata: true,
+        filter: {
+          tenantId: this.tenantId,
+          ...(options?.filters || {})
+        }
+      })
+
+    // Hydrate results with full data
+    return this.hydrateResults(results.matches)
+  }
+}
+```
+
+## Organization Features
+
+### Folder Hierarchies
+
+```typescript
+// Nested folder structure
+interface Folder {
+  id: string
+  name: string
+  parentId: string | null
+  children?: Folder[]
+  memoryPages: MemoryPage[]
+  createdAt: Date
+  updatedAt: Date
+}
+
+// Drag-and-drop support
+const handleDrop = async (itemId: string, targetFolderId: string) => {
+  await api.folder.moveItem.mutate({
+    itemId,
+    targetFolderId,
+    itemType: 'memoryPage'
+  })
+}
+```
+
+### Tagging System
+
+```typescript
+// Flexible tagging for cross-cutting concerns
+const taggedPages = await api.memoryPage.getByTags.query({
+  tags: ['important', 'review'],
+  operator: 'AND' // or 'OR'
+})
+
+// Auto-suggest tags based on content
+const suggestedTags = await api.ai.suggestTags.query({
+  content: pageContent
+})
+```
+
+## Content Capture Methods
+
+### Quick Capture
+
+```typescript
+// Lightning-fast input without organization
+const quickCapture = api.capture.quick.useMutation()
+
+await quickCapture.mutateAsync({
+  content: 'Remember to call John about the project proposal',
+  autoProcess: true // AI will categorize and extract entities
+})
+```
+
+### Chrome Extension Integration
+
+```javascript
+// Chrome extension content script
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'capture') {
+    const pageData = {
+      url: window.location.href,
+      title: document.title,
+      selectedText: window.getSelection().toString(),
+      fullContent: document.body.innerText
+    }
+
+    // Send to Interlay API
+    fetch('https://api.interlay.ai/capture/web', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${userToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(pageData)
+    })
+  }
+})
+```
+
+### Email Processing with Gmail
+
+```typescript
+// Gmail webhook handler
+export async function handleGmailWebhook(payload: GmailWebhookPayload) {
+  const email = await gmail.users.messages.get({
+    userId: 'me',
+    id: payload.message.id
+  })
+
+  // Extract and process email content
+  const memoryPage = await processEmail(email)
+
+  // Extract structured data (contacts, dates, etc.)
+  const extractedData = await ai.extractEntities(email.snippet)
+
+  // Create memory items for extracted entities
+  for (const entity of extractedData.entities) {
+    await createMemoryItem(entity)
+  }
+}
+```
+
+## AI-Powered Features
+
+### Automatic Summarization
+
+```typescript
+// Generate summary for long content
+const summary = await api.ai.summarize.mutate({
+  memoryPageId: pageId,
+  style: 'bullets' // or 'paragraph', 'key-points'
+})
+```
+
+### Memory Type Extraction
+
+```typescript
+// Extract structured data from unstructured text
+const extracted = await api.ai.extractMemoryTypes.mutate({
+  content: 'John Smith from Acme Corp called. His email is john@acme.com',
+  targetTypes: ['Contact', 'Company']
+})
+
+// Result:
+// {
+//   Contact: { firstName: 'John', lastName: 'Smith', email: 'john@acme.com' },
+//   Company: { name: 'Acme Corp' }
+// }
+```
+
+## Search Capabilities
+
+### Hybrid Search
+
+```typescript
+// Combine keyword and semantic search
+const searchResults = await api.search.hybrid.query({
+  query: 'project deadline next week',
+  filters: {
+    type: ['memoryPage', 'task'],
+    dateRange: {
+      start: new Date(),
+      end: addDays(new Date(), 7)
+    }
+  },
+  useVector: true,
+  useKeyword: true,
+  limit: 20
+})
+```
+
+### Real-time Search with Debouncing
+
+```tsx
+// React component with debounced search
+function SearchBar() {
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState([])
+
+  const debouncedSearch = useMemo(
+    () => debounce(async (searchQuery: string) => {
+      if (searchQuery.length < 2) return
+
+      const data = await api.search.instant.query({
+        query: searchQuery,
+        limit: 5
+      })
+      setResults(data)
+    }, 300),
+    []
+  )
+
+  useEffect(() => {
+    debouncedSearch(query)
+  }, [query, debouncedSearch])
+
+  return (
+    <input
+      value={query}
+      onChange={(e) => setQuery(e.target.value)}
+      placeholder="Search your memory bank..."
+    />
+  )
+}
+```
+
+## Best Practices
+
+1. **Use Memory Pages for**:
+   - Meeting notes and brainstorming
+   - Research and article clippings
+   - Rich media content
+   - Long-form documentation
+
+2. **Use Memory Types for**:
+   - Contacts and CRM data
+   - Projects and tasks
+   - Structured databases
+   - Relational data
+
+3. **Optimize Search**:
+   - Add relevant tags for better filtering
+   - Use descriptive titles
+   - Let AI generate summaries for long content
+   - Regularly review and merge duplicates
+
+4. **Performance Tips**:
+   - Batch operations when possible
+   - Use pagination for large datasets
+   - Leverage React Query caching
+   - Enable optimistic updates
+
+## Related Documentation
+
+- [Memory Types Deep Dive](/core-concepts/memory-types)
+- [Search Implementation](/api-reference/search)
+- [Vector Database Setup](/services/pinecone)
+- [AI Features](/core-concepts/ai-integration)
