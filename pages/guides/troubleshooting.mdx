@@ -1,0 +1,32 @@
+# Troubleshooting
+
+Common issues and their solutions.
+
+## Development Issues
+
+### Port Already in Use
+**Error**: Port 3007 is already in use
+**Solution**: 
+\`\`\`bash
+lsof -ti:3007 | xargs kill -9
+\`\`\`
+
+### Database Connection Failed
+**Error**: Cannot connect to PostgreSQL
+**Solution**: Check DATABASE_URL in .env.local
+
+### Tailwind CSS Issues
+**Error**: Tailwind directives not working
+**Solution**: Ensure using Tailwind v3.x, not v4
+
+## Production Issues
+
+### Memory Limits
+Monitor memory usage and scale accordingly
+
+### API Rate Limits
+Implement caching and request batching
+
+---
+
+*Can't find your issue? Check the FAQ →*

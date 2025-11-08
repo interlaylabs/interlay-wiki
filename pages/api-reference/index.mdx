@@ -1,0 +1,66 @@
+# API Reference
+
+Complete API documentation for Interlay AI's tRPC routers and REST endpoints.
+
+## tRPC Routers
+
+Our API uses tRPC for type-safe client-server communication with 25+ specialized routers:
+
+### Core Data Routers
+- **memoryPage**: Memory page CRUD operations
+- **memoryType**: Memory type management
+- **memoryItem**: Memory item operations
+- **folder**: Folder organization
+
+### AI & Search Routers
+- **search**: Unified search across all content
+- **vector**: Semantic search operations
+- **ai**: AI processing endpoints
+
+### Automation Routers
+- **flow**: Workflow management
+- **node**: Node registry operations
+- **execution**: Workflow execution tracking
+
+### Integration Routers
+- **gmail**: Email integration
+- **discord**: Discord bot operations
+- **calendar**: Calendar synchronization
+
+## Authentication
+
+All API calls require authentication via Clerk:
+```typescript
+const ctx = await createTRPCContext({
+  headers: {
+    authorization: 'Bearer <token>'
+  }
+});
+```
+
+## Common Patterns
+
+### Pagination
+```typescript
+const results = await api.memoryPage.list.query({
+  limit: 20,
+  offset: 0,
+  orderBy: 'createdAt',
+  order: 'desc'
+});
+```
+
+### Error Handling
+```typescript
+try {
+  const result = await api.memoryPage.create.mutate(data);
+} catch (error) {
+  if (error.code === 'UNAUTHORIZED') {
+    // Handle auth error
+  }
+}
+```
+
+---
+
+*See individual router documentation for detailed endpoints →*

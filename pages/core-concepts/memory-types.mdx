@@ -1,0 +1,318 @@
+# Memory Types & Items
+
+The structured data backbone of Interlay AI - create custom data models for any use case.
+
+## Overview
+
+Memory Types provide a flexible, CRM-style data system that allows you to create custom structured data models tailored to your specific needs. Unlike unstructured Memory Pages, Memory Types enforce structure while maintaining flexibility.
+
+## Key Concepts
+
+### Memory Types
+A Memory Type is a template that defines the structure for a category of data. Think of it as a custom database table or a form template.
+
+Examples:
+- **Contacts**: Name, email, phone, company, notes
+- **Projects**: Title, status, deadline, team members, budget
+- **Research**: Topic, sources, findings, conclusions
+- **Meeting Notes**: Date, attendees, agenda, action items
+
+### Memory Items
+Memory Items are individual instances of a Memory Type. If a Memory Type is the template, Memory Items are the filled-out forms.
+
+### Dynamic Fields
+Each Memory Type can have multiple fields with different data types:
+- **Text**: Single or multi-line text
+- **Number**: Integers or decimals
+- **Date**: Date and time values
+- **Boolean**: Yes/no checkboxes
+- **Select**: Dropdown options
+- **Relationship**: Links to other Memory Items
+- **File**: Attached documents or media
+
+## Creating Memory Types
+
+### Via UI
+1. Navigate to Memory Types section
+2. Click "Create New Type"
+3. Define fields and their properties
+4. Set validation rules (optional)
+5. Configure display settings
+
+### Via API
+```typescript
+const memoryType = await api.memoryType.create.mutate({
+  name: "Customer",
+  description: "Customer relationship data",
+  fields: [
+    {
+      name: "company",
+      type: "text",
+      required: true
+    },
+    {
+      name: "contact_email",
+      type: "email",
+      required: true
+    },
+    {
+      name: "last_contact",
+      type: "date"
+    }
+  ]
+});
+```
+
+## Working with Memory Items
+
+### Creating Items
+```typescript
+const customer = await api.memoryItem.create.mutate({
+  typeId: "customer_type_id",
+  data: {
+    company: "Acme Corp",
+    contact_email: "contact@acme.com",
+    last_contact: new Date()
+  }
+});
+```
+
+### Querying Items
+```typescript
+// Find all customers
+const customers = await api.memoryItem.findByType.query({
+  typeId: "customer_type_id"
+});
+
+// Search with filters
+const activeCustomers = await api.memoryItem.search.query({
+  typeId: "customer_type_id",
+  filters: {
+    status: "active",
+    last_contact: { gte: thirtyDaysAgo }
+  }
+});
+```
+
+### Bulk Operations
+```typescript
+// Import from CSV
+await api.memoryItem.bulkImport.mutate({
+  typeId: "customer_type_id",
+  csvData: csvContent,
+  mapping: {
+    "Company Name": "company",
+    "Email": "contact_email"
+  }
+});
+
+// Export to JSON
+const exportData = await api.memoryItem.export.query({
+  typeId: "customer_type_id",
+  format: "json"
+});
+```
+
+## Relationships
+
+Memory Items can be linked to create powerful data relationships:
+
+### One-to-Many
+A Project can have multiple Tasks:
+```typescript
+const project = await api.memoryItem.create.mutate({
+  typeId: "project_type_id",
+  data: {
+    name: "Website Redesign",
+    tasks: ["task_1_id", "task_2_id", "task_3_id"]
+  }
+});
+```
+
+### Many-to-Many
+Contacts can belong to multiple Companies:
+```typescript
+const contact = await api.memoryItem.create.mutate({
+  typeId: "contact_type_id",
+  data: {
+    name: "John Doe",
+    companies: ["company_1_id", "company_2_id"]
+  }
+});
+```
+
+## AI Integration
+
+### Automatic Extraction
+AI can automatically extract structured data from unstructured content:
+
+```typescript
+// Extract contact information from an email
+const extractedData = await api.ai.extractMemoryType.mutate({
+  content: emailContent,
+  targetType: "contact_type_id"
+});
+```
+
+### Smart Suggestions
+AI provides intelligent suggestions for field values based on context:
+- Auto-complete for text fields
+- Relationship suggestions based on content
+- Data validation and correction
+
+### Natural Language Queries
+Query your structured data using natural language:
+```
+"Show me all customers we haven't contacted in 30 days"
+"Find projects due this week with budget over $10k"
+"List all contacts at companies in San Francisco"
+```
+
+## Templates
+
+Pre-built Memory Type templates for common use cases:
+
+### CRM Template
+- Contacts
+- Companies
+- Deals
+- Activities
+
+### Project Management
+- Projects
+- Tasks
+- Milestones
+- Team Members
+
+### Knowledge Base
+- Articles
+- Categories
+- Tags
+- Resources
+
+### Personal
+- Books
+- Movies
+- Recipes
+- Travel Plans
+
+## Advanced Features
+
+### Computed Fields
+Create fields that automatically calculate values:
+```typescript
+{
+  name: "days_since_contact",
+  type: "computed",
+  formula: "DAYS_BETWEEN(NOW(), last_contact_date)"
+}
+```
+
+### Validation Rules
+Ensure data quality with custom validation:
+```typescript
+{
+  name: "email",
+  type: "text",
+  validation: {
+    pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+    message: "Please enter a valid email address"
+  }
+}
+```
+
+### Webhooks
+Trigger automations when Memory Items change:
+```typescript
+{
+  event: "item.created",
+  typeId: "customer_type_id",
+  webhook: "https://your-api.com/new-customer"
+}
+```
+
+## Best Practices
+
+### Design Principles
+1. **Start Simple**: Begin with essential fields, add more as needed
+2. **Use Consistent Naming**: Establish naming conventions early
+3. **Plan Relationships**: Think about data connections upfront
+4. **Leverage Templates**: Start with templates and customize
+
+### Performance Tips
+- Index frequently searched fields
+- Use relationships instead of duplicating data
+- Archive old items instead of deleting
+- Batch operations for bulk changes
+
+### Data Governance
+- Set required fields for critical data
+- Use validation to ensure data quality
+- Regular backups and exports
+- Document your Memory Type schemas
+
+## Integration with Workflows
+
+Memory Types seamlessly integrate with Automation Flows:
+
+### Triggers
+- New Memory Item created
+- Memory Item updated
+- Field value changed
+- Relationship added/removed
+
+### Actions
+- Create Memory Item
+- Update fields
+- Add relationships
+- Export to external systems
+
+### Example Workflow
+```
+Trigger: New Contact created
+→ Check for existing Company
+→ Create Company if not exists
+→ Link Contact to Company
+→ Send welcome email
+→ Schedule follow-up task
+```
+
+## API Reference
+
+### Memory Type Methods
+- `create`: Create new Memory Type
+- `update`: Modify Memory Type structure
+- `delete`: Remove Memory Type (with safeguards)
+- `list`: Get all Memory Types
+- `getById`: Retrieve specific Memory Type
+
+### Memory Item Methods
+- `create`: Create new Memory Item
+- `update`: Update Memory Item data
+- `delete`: Remove Memory Item
+- `findByType`: Get all items of a type
+- `search`: Advanced search with filters
+- `bulkCreate`: Create multiple items
+- `bulkUpdate`: Update multiple items
+- `export`: Export items in various formats
+
+## Migration & Import
+
+### From Other Systems
+Import guides for common platforms:
+- Notion databases
+- Airtable bases
+- Google Sheets
+- Excel files
+- CSV/JSON files
+
+### Data Mapping
+Tools for mapping external fields to Memory Type fields:
+- Automatic field matching
+- Manual mapping interface
+- Data transformation rules
+- Validation before import
+
+---
+
+*Next: [Automation Flows →](/core-concepts/automation-flows)*

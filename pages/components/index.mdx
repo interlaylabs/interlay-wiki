@@ -1,0 +1,413 @@
+# Components
+
+Comprehensive UI component library powering the Interlay AI interface.
+
+## Overview
+
+The Interlay component library is a collection of React components built with TypeScript, Tailwind CSS, and Radix UI primitives. Following a compound component pattern, these components provide flexible, accessible, and performant building blocks for the entire application.
+
+## Component Categories
+
+### Base UI Components
+Foundation components inspired by shadcn/ui:
+- [Button](/components/button) - Interactive button component
+- [Input](/components/input) - Text input fields
+- [Select](/components/select) - Dropdown selection
+- [Dialog](/components/dialog) - Modal dialogs
+- [Card](/components/card) - Container components
+- [Tabs](/components/tabs) - Tabbed interfaces
+
+### Layout Components
+Responsive layout management:
+- [Layout](/components/layout) - Main app layout
+- [Sidebar](/components/sidebar) - Navigation sidebar
+- [Header](/components/header) - App header
+- [Footer](/components/footer) - App footer
+- [Grid](/components/grid) - Responsive grid system
+
+### Memory Components
+Memory Bank specific components:
+- [MemoryEditor](/components/memory-editor) - Rich text editor
+- [MemoryCard](/components/memory-card) - Memory display card
+- [FolderTree](/components/folder-tree) - Hierarchical folder view
+- [TagInput](/components/tag-input) - Tag management
+
+### Automation Components
+Flow builder components:
+- [FlowCanvas](/components/flow-canvas) - React Flow canvas
+- [NodePanel](/components/node-panel) - Node selection panel
+- [ParameterForm](/components/parameter-form) - Dynamic forms
+- [ExecutionLog](/components/execution-log) - Workflow logs
+
+### Integration Components
+Third-party service UIs:
+- [GmailConnect](/components/gmail-connect) - Gmail OAuth
+- [DiscordSetup](/components/discord-setup) - Discord bot config
+- [CalendarView](/components/calendar-view) - Calendar integration
+
+## Component Architecture
+
+### Design Principles
+
+1. **Composition Over Configuration**
+   - Small, focused components
+   - Compound component patterns
+   - Flexible composition
+
+2. **Accessibility First**
+   - ARIA compliance
+   - Keyboard navigation
+   - Screen reader support
+
+3. **Performance Optimized**
+   - React.memo for expensive renders
+   - Virtual scrolling for lists
+   - Code splitting
+
+4. **TypeScript Native**
+   - Full type safety
+   - Intellisense support
+   - Runtime validation
+
+### File Structure
+```
+src/components/
+├── ui/                    # Base UI components
+│   ├── button.tsx
+│   ├── input.tsx
+│   └── ...
+├── shared/               # Shared business components
+│   ├── search-bar.tsx
+│   ├── user-menu.tsx
+│   └── ...
+├── memoryPage/          # Memory-specific components
+│   ├── editor/
+│   ├── viewer/
+│   └── ...
+└── automations/         # Automation components
+    ├── flow-builder/
+    ├── nodes/
+    └── ...
+```
+
+## Using Components
+
+### Basic Usage
+```tsx
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+
+export function MyComponent() {
+  return (
+    <Card>
+      <Card.Header>
+        <Card.Title>Example Card</Card.Title>
+      </Card.Header>
+      <Card.Content>
+        <p>Card content goes here</p>
+        <Button onClick={() => console.log('clicked')}>
+          Click me
+        </Button>
+      </Card.Content>
+    </Card>
+  );
+}
+```
+
+### Compound Components
+```tsx
+import { Dialog } from '@/components/ui/dialog';
+
+export function ConfirmDialog() {
+  return (
+    <Dialog>
+      <Dialog.Trigger asChild>
+        <Button>Open Dialog</Button>
+      </Dialog.Trigger>
+      <Dialog.Content>
+        <Dialog.Header>
+          <Dialog.Title>Confirm Action</Dialog.Title>
+          <Dialog.Description>
+            Are you sure you want to proceed?
+          </Dialog.Description>
+        </Dialog.Header>
+        <Dialog.Footer>
+          <Dialog.Cancel>Cancel</Dialog.Cancel>
+          <Dialog.Action>Confirm</Dialog.Action>
+        </Dialog.Footer>
+      </Dialog.Content>
+    </Dialog>
+  );
+}
+```
+
+## Styling System
+
+### Tailwind CSS Integration
+All components use Tailwind CSS with custom configuration:
+
+```tsx
+// Component with Tailwind classes
+export function Badge({ variant = 'default', children }) {
+  const variants = {
+    default: 'bg-gray-100 text-gray-800',
+    primary: 'bg-blue-100 text-blue-800',
+    success: 'bg-green-100 text-green-800',
+    warning: 'bg-yellow-100 text-yellow-800',
+    danger: 'bg-red-100 text-red-800'
+  };
+
+  return (
+    <span className={cn(
+      'px-2 py-1 text-xs font-medium rounded-full',
+      variants[variant]
+    )}>
+      {children}
+    </span>
+  );
+}
+```
+
+### CSS Variables
+Theme customization through CSS variables:
+```css
+:root {
+  --primary: 220 90% 56%;
+  --secondary: 240 5% 96%;
+  --accent: 240 5% 84%;
+  --background: 0 0% 100%;
+  --foreground: 240 10% 4%;
+}
+
+.dark {
+  --primary: 220 90% 56%;
+  --secondary: 240 5% 16%;
+  --accent: 240 5% 26%;
+  --background: 240 10% 4%;
+  --foreground: 0 0% 98%;
+}
+```
+
+## Component Patterns
+
+### Controlled vs Uncontrolled
+```tsx
+// Controlled component
+function ControlledInput() {
+  const [value, setValue] = useState('');
+
+  return (
+    <Input
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+    />
+  );
+}
+
+// Uncontrolled with ref
+function UncontrolledInput() {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleSubmit = () => {
+    console.log(inputRef.current?.value);
+  };
+
+  return <Input ref={inputRef} defaultValue="initial" />;
+}
+```
+
+### Render Props
+```tsx
+function DataProvider({ render, url }) {
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    fetch(url).then(res => res.json()).then(setData);
+  }, [url]);
+
+  return render(data);
+}
+
+// Usage
+<DataProvider
+  url="/api/data"
+  render={(data) => (
+    <div>{data ? <List items={data} /> : <Loading />}</div>
+  )}
+/>
+```
+
+### Custom Hooks
+```tsx
+// Reusable logic in hooks
+function useDebounce(value: string, delay: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+```
+
+## Accessibility
+
+### ARIA Support
+All components include proper ARIA attributes:
+```tsx
+<Button
+  aria-label="Save document"
+  aria-pressed={isPressed}
+  aria-disabled={isDisabled}
+>
+  Save
+</Button>
+```
+
+### Keyboard Navigation
+Full keyboard support for all interactive components:
+- Tab navigation
+- Arrow key navigation in menus
+- Escape to close modals
+- Enter/Space to activate buttons
+
+### Focus Management
+Proper focus trap and restoration:
+```tsx
+function Modal({ isOpen, onClose, children }) {
+  const previousFocus = useRef<HTMLElement>();
+
+  useEffect(() => {
+    if (isOpen) {
+      previousFocus.current = document.activeElement as HTMLElement;
+      // Trap focus in modal
+    } else {
+      previousFocus.current?.focus();
+    }
+  }, [isOpen]);
+
+  return createPortal(
+    <div role="dialog" aria-modal="true">
+      {children}
+    </div>,
+    document.body
+  );
+}
+```
+
+## Testing Components
+
+### Unit Tests
+```tsx
+import { render, screen, fireEvent } from '@testing-library/react';
+import { Button } from './button';
+
+describe('Button', () => {
+  it('renders with text', () => {
+    render(<Button>Click me</Button>);
+    expect(screen.getByText('Click me')).toBeInTheDocument();
+  });
+
+  it('handles click events', () => {
+    const handleClick = jest.fn();
+    render(<Button onClick={handleClick}>Click</Button>);
+
+    fireEvent.click(screen.getByText('Click'));
+    expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+});
+```
+
+### Integration Tests
+```tsx
+import { render, waitFor } from '@testing-library/react';
+import { MemoryEditor } from './memory-editor';
+
+describe('MemoryEditor', () => {
+  it('saves content to API', async () => {
+    const { getByText, getByRole } = render(<MemoryEditor />);
+
+    const editor = getByRole('textbox');
+    fireEvent.change(editor, { target: { value: 'Test content' } });
+
+    fireEvent.click(getByText('Save'));
+
+    await waitFor(() => {
+      expect(api.memory.save).toHaveBeenCalledWith({
+        content: 'Test content'
+      });
+    });
+  });
+});
+```
+
+## Performance Optimization
+
+### Code Splitting
+```tsx
+// Lazy load heavy components
+const FlowBuilder = lazy(() => import('./flow-builder'));
+
+function AutomationPage() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <FlowBuilder />
+    </Suspense>
+  );
+}
+```
+
+### Memoization
+```tsx
+// Memoize expensive components
+const ExpensiveList = memo(({ items }) => {
+  return (
+    <VirtualList
+      items={items}
+      renderItem={(item) => <ListItem {...item} />}
+    />
+  );
+}, (prevProps, nextProps) => {
+  return prevProps.items === nextProps.items;
+});
+```
+
+### Virtual Scrolling
+```tsx
+import { FixedSizeList } from 'react-window';
+
+function VirtualMemoryList({ memories }) {
+  return (
+    <FixedSizeList
+      height={600}
+      width="100%"
+      itemCount={memories.length}
+      itemSize={80}
+    >
+      {({ index, style }) => (
+        <div style={style}>
+          <MemoryCard memory={memories[index]} />
+        </div>
+      )}
+    </FixedSizeList>
+  );
+}
+```
+
+## Component Documentation
+
+Each component should have:
+1. **TypeScript interfaces** for props
+2. **JSDoc comments** for complex logic
+3. **Storybook stories** for visual testing
+4. **README** with usage examples
+5. **Unit tests** for functionality
+
+---
+
+*Continue to specific component documentation →*
